@@ -1,4 +1,4 @@
-# IS609
+# DATA 609
 
-https://github.com/dgn2/IS609.git
+https://github.com/dnokes/DATA_609.git
 
