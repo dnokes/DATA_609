@@ -1,0 +1,219 @@
+# (APPENDIX) Appendix {-}
+
+# Global Futures - Instrument Details {#appendix-instrument-details}
+
+The global futures instrument universe used in this report is defined as follows:
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+# read table of calibrated parameters by instrument
+fileNameLrdLog<-'C:/Users/Derek/Documents/GitHub/IS609/final_project/coefficientsByInstrumentLog.rds'
+fileLrdLog<-fileNameLrdLog
+# write
+coefficientsByInstrument<-readRDS(fileLrdLog)
+
+coefficientsByInstrument[,1]<-gsub("&", "", coefficientsByInstrument[,1])
+coefficientsByInstrument[,1]<-gsub("/", "", coefficientsByInstrument[,1])
+coefficientsByInstrument[,1]<-gsub("#", "", coefficientsByInstrument[,1])
+
+instrumentDetails<-data.frame(instrumentName=coefficientsByInstrument[,1],
+  groupName=coefficientsByInstrument[,2],
+  multiplier=as.numeric(coefficientsByInstrument[,3]),
+  currency=coefficientsByInstrument[,4])
+
+indexA<-1:29
+indexB<-30:67
+indexC<-68:95
+indexD<-96:115
+
+A<-instrumentDetails[indexA,]
+B<-instrumentDetails[indexB,]
+C<-instrumentDetails[indexC,]
+D<-instrumentDetails[indexD,]
+
+columnNames<-c('Instrument Name','Group Name','Multiplier','Currency')
+
+```
+
+
+```{r globalFutInstrumentDetailsA,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+knitr::kable(A, booktabs = TRUE,
+  caption = 'Global Futures - Instrument Details',
+  col.names=columnNames,row.names =indexA)
+
+```
+
+```{r globalFutInstrumentDetailsB,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+knitr::kable(B, booktabs = TRUE,
+  caption = 'Global Futures - Instrument Details',
+  col.names=columnNames,row.names =indexB)
+
+```
+
+```{r globalFutInstrumentDetailsC,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+knitr::kable(C, booktabs = TRUE,
+  caption = 'Global Futures - Instrument Details',
+  col.names=columnNames,row.names =indexC)
+
+```
+
+```{r globalFutInstrumentDetailsD,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+knitr::kable(D, booktabs = TRUE,
+  caption = 'Global Futures - Instrument Details',
+  col.names=columnNames,row.names =indexD)
+```
+
+# Objective Function: Evaluation Measure(s) for Performance {#appendix-objective-function}
+
+In order to meet our objectives, we must have measures to quantify both strategy performance and the breadth of the operational domain.
+
+We can define the *terminal wealth relative* as the multiplier that we apply to our starting equity to get our ending equity. In other words, the terminal wealth relative is one plus our total return.
+
+\begin{equation} 
+  \text{TWR}_{T} = \prod_{t=1}^{T} \left( 1+ r_{t} \right) = \prod_{t=1}^{T} \left( \text{HPR}_{t} \right)
+  (\#eq:twrViaHPR)
+\end{equation}
+
+Where:
+
+$r_{t}$ is our return over period $t$
+
+$\text{HPR}_{t}$ is our holding period return or one plus our return over the $t^{th}$ period
+
+$\text{TWR}_{T}$ is our terminal wealth relative or one plus our total return over $T$ periods
+
+We can approximate our $\text{TWR}_{T}$ with the following formula:
+
+\begin{equation}
+  \text{aTWR}_{T} = \left(\sqrt{(\text{AHPR}_{T}^{2}-\text{SDHPR}_{T}^{2})}\right)^{T}=\text{EGM}^{T}
+  (\#eq:approxTwrViaAHPRAndADHPR)
+\end{equation}
+
+Where:
+
+$N$ is the number of sub-periods over which we have returns
+
+$\text{aTWR}_{T}$ is the approximate terminal wealth relative (i.e., one plus the approximate total return over the $T$ periods)
+
+$\text{HPR}_{t}$ is the holding period return (i.e., the return over the $t^{th}$ period)
+
+$\text{AHPR}_{T}$ is arithmetic average of the holding period returns over the $T$ periods:
+
+\begin{equation}
+  \text{AHPR}_{T} = \frac{1}{T} \sum_{t=1}^{T} \left( \text{HPR}_{t} \right)
+  (\#eq:AHPR)
+\end{equation}
+
+$\text{SDHPR}_{T}$ is the standard deviation of the holding period returns over the $T$ periods:
+
+\begin{equation}
+  \text{SDHPR}_{T} = \frac{1}{T-1} \sum_{t=1}^{T} \left( \text{AHPR}_{T}-\text{HPR}_{t} \right)^{2}
+  (\#eq:SDHPR)
+\end{equation}
+
+$\text{EGM}_{T}$ is the estimated geometric mean (EGM) over the $T$ periods
+
+\begin{equation}
+  \text{EGM}_{T} = \sqrt{\left(\text{AHPR}_{T}^{2}-\text{SDHPR}_{T}^{2}\right)}
+  (\#eq:EGMviaAHPRAndSDHPR)
+\end{equation}
+
+Equation \@ref(eq:approxTwrViaAHPRAndADHPR) illustrates that:
+
+[1] If $\text{AHPR}_{T}$ is less than or equal to 1, then regardless of the other two variables, $\text{SDHPR}_{T}$ and $T$, our result can be no greater than 1 (i.e., our total return will be less than or equal to zero).
+
+[2] If $\text{AHPR}_{T}$ is less than 1, then as $T$ approaches infinity, $\text{TWR}_{T}$ approaches zero. This means that if $\text{AHPR}_{T}$ is less than 1, we will eventually go broke.
+
+[3] If $\text{AHPR}_{T}$ is greater than 1, increasing $T$ increases our $\text{TWR}_{T}$.
+
+[4] If we reduce our $\text{SDHPR}_{T}$ more than we reduce our $\text{AHPR}_{T}$ our $\text{TWR}_{T}$ will rise.
+
+Reducing variability or increasing average return by the same amount has an *identical* impact on compound return.
+
+We can use equation \@ref(eq:approxTwrViaAHPRAndADHPR) to understand how changes in the average return, return variability, or both impact our compounded return.
+
+$\text{EGM}_{T}$ - which is composed of $\text{AHPR}_{T}^{2}$ and $\text{SDHPR}_{T}^{2}$ - is our primary measure of trading strategy performance. All other performance metrics are a function of these three metrics.
+
+The breadth of the operational domain will be measured as the span of parameters over which strategy performance is acceptable, where acceptable is defined using a vector of strategy performance metrics, including $\text{EGM}_{T}$, $\text{AHPR}_{T}^{2}$, and $\text{SDHPR}_{T}^{2}$.
+
+We can visualize the relationship between $\text{EGM}$, $\text{AHPR}$, and $\text{SDHPR}$ based on a rearragement of \@ref(eq:EGMviaAHPRAndSDHPR):
+
+$$\setlength{\unitlength}{.5in} 
+\begin{picture}(4,3)(0,0) 
+  \linethickness{0.5pt} 
+  \put(0,0){\line(1,0){4}} 
+  \put(4,0){\line(0,1){3}} 
+  \put(0,0){\line(4,3){4}} 
+  \put(2,-.25){\makebox(0,0){$\text{SDHPR}$}} 
+  \put(4.5,1.5){\makebox(0,0){$\text{EGM}$}} 
+  \put(2,2){\makebox(0,0){$\text{AHPR}$}} 
+\end{picture}$$
+
+\begin{equation}
+   \text{AHPR}_{T}^{2}=\text{EGM}_{T}^{2}+\text{SDHPR}_{T}^{2}
+  (\#eq:pythagorem)
+\end{equation}
+
+The above diagram makes it clear that any decrease in $\text{SDHPR}$ is equivalent to an increase in $\text{AHPR}$.
+
+###  Extending to a Porfolio
+
+We can also extend this result to show how the cross-dependence between strategies/investments - which ultimately drives portfolio variation - impacts compound return.
+
+#### Portfolio Return
+
+Portfolio return $r_{P,t}$ is a function of the weights and the returns of portfolio investment components. We define the portfolio return for $I$ component investments for the period $t$ given the period returns $r_{i,t}$ and portfolio weights $w_{i,t}$ for each component investment $i$ as:
+
+\begin{equation}
+  r_{P,t}=\sum_{i=1}^{I}\left(r_{i,t}w_{i,t}\right)
+  (\#eq:portfolioReturn)
+\end{equation}
+
+Letting $W_{t}$ be a vector of portfolio component weights for period $t$, ' denote the transpose operator, and $R_{t}$ be a vector of the period $t$ component returns, we can use matrix notation to define the portfolio return as follows:
+
+\begin{equation}
+  r_{P,t}=W'R
+  (\#eq:portfolioReturnCrossProduct)
+\end{equation}
+
+The holding period return (HPR) for the portfolio is one plus the portfolio return for the period $t$:
+
+\begin{equation}
+  \text{HPR}_{P,t}=1+\sum_{i=1}^{I}\left(r_{i,t}w_{i,t}\right)=1+r_{P,t}
+  (\#eq:portfolioHPR)
+\end{equation}
+
+The portfolio holding period return is the factor by which we multiply the starting value of the portfolio to get the ending value of the portfolio, given the period returns and weights of each component investment.
+
+Similarly, we define the terminal wealth relative (TWR) as the factor by which we multiply the starting value of the portfolio to get the ending value of the portfolio given the return streams and weights for a sequence of periods between one and $T$:
+
+\begin{equation}
+\text{TWR}_{P,T}=\prod_{1=t}^{T}\left(1+\left(\sum_{i=1}^{I}\left(r_{i,t}w_{i,t}\right)\right)\right)=\prod_{t=1}^{T}\text{HPR}_{P,t}
+  (\#eq:portfolioTWR)
+\end{equation}
+
+We define the portfolio compounded return for the interval from period 1 to $T$ as the portfolio terminal wealth relative minus one:
+
+\begin{equation}
+  r_{P,T}=\left(\prod_{1=t}^{T}\left(1+\left(\sum_{i=1}^{I}\left(r_{i,t}w_{i,t}\right)\right)\right)\right)-1=\left(\prod_{1=t}^{T}\left(1+r_{P,t}\right)\right)-1=\left(\prod_{1=t}^{T}\text{HPR}_{P,t}\right)-1=\text{TWR}_{P,T}-1
+  (\#eq:portfolioCompoundReturn)
+\end{equation}
+
+#### Portfolio Return Variability
+Assuming that *standardized* component returns are normally distributed, and thus that portfolio returns are multivariate normally distributed, we can define the standard deviation of the portfolio *standardized* returns using matrix notation as:
+
+\begin{equation}
+  \sigma_{P,T}=\sqrt{Var\left( {W_{t}}' R_{t} \right)}=\sqrt{{W_{t}}'\Sigma W_{t}}
+  (\#eq:portfolioVolatility)
+\end{equation}
+
+Where $W_{t}$ is a vector of portfolio component weights for period $t$, ' denotes the transpose operator, $R_{t}$ is a vector of the period $t$ component returns, and $\Sigma$ is the return covariance matrix.
+
+```{r,echo=FALSE}
+portfolioVolatility <- function (W,COV){
+  portfolioStandardDeviation = sqrt( t(W)%*%COV%*%W )  
+}
+```
+
+In the portfolio context, $\text{EGM}_{T}$ is also a function of the return covariance. Reducing the return covariance - keeping all other return properties the same - thus reduces portfolio variation, increasing $\text{EGM}_{T}$.
+
+

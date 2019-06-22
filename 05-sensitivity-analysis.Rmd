@@ -1,0 +1,737 @@
+# Sensitivity Analysis {#sensitivity-analysis}
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+evalFlag<-TRUE
+```
+
+```{r,eval=evalFlag,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+#-------------------------------------------------------------------------
+# plot series
+#-------------------------------------------------------------------------
+plotSecenarioSignals<- function (marketModelParameterScenarios,table_figure,
+  titleName,xLabel,yLabel){
+
+  figure_df <- data.frame(Price=table_figure[,1],
+    Stop=table_figure[,2],
+    FastEMA=table_figure[,3],
+    SlowEMA=table_figure[,4])
+
+  p1 <- ggplot(figure_df, aes(marketModelParameterScenarios)) +
+    geom_line(aes(y=Price), colour="black") +
+    geom_line(aes(y=Stop), colour="blue") +
+    geom_line(aes(y=FastEMA), colour="red") +
+    geom_line(aes(y=SlowEMA), colour="purple") +
+    scale_color_grey() +
+    ggtitle(titleName) + xlab(xLabel) + ylab(yLabel)
+
+  return (p1)
+
+}
+
+fileDirectory<-'D:/MS/IS609/final_project/rerun_2'
+outputDirectory<-'C:/Users/Derek/Documents/GitHub/IS609/final_project'
+#-------------------------------------------------------------------------
+# common parameters
+#-------------------------------------------------------------------------
+vScenarioIndex<-4
+vovScenarioIndex<-2
+pathIndex<-1
+slowLookback<-180
+
+dScenario<-seq(0.05,0.45,by=0.05)
+driftScenario<-seq(-0.1,0.1,by=0.005)
+volLevelScenario<-log(seq(0.0005,0.0035,by=0.0005))
+volOfVolScenario<-seq(0.1,0.9,by=0.05)
+#-------------------------------------------------------------------------
+# plot signal for d=0.05, negative drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-1
+driftScenarioIndex<-1
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName1<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName1),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName1),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName18<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName18,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.35, negative drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-7
+driftScenarioIndex<-1
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName2<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName2),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName2),plot=g_signals)
+
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName17<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName17,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.45, negative drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-9
+driftScenarioIndex<-1
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName3<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName3),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName3),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName16<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName16,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.05,no drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-1
+driftScenarioIndex<-21
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+                  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName4<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName4),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName4),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName15<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName15,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.35, no drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-7
+driftScenarioIndex<-21
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName5<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName5),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName5),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName14<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName14,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.45, no drift
+#-------------------------------------------------------------------------
+dScenarioIndex<-9
+driftScenarioIndex<-21
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName6<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName6),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName6),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName13<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName13,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.05,drift=0.1
+#-------------------------------------------------------------------------
+dScenarioIndex<-1
+driftScenarioIndex<-41
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName7<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName7),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName7),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName12<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName12,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.35,drift=0.1
+#-------------------------------------------------------------------------
+dScenarioIndex<-7
+driftScenarioIndex<-41
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName8<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(paste0(fileDirectory,'/',outputFileName8),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName8),plot=g_signals)
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName11<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName11,plot=g_strategyTWR)
+
+#-------------------------------------------------------------------------
+# plot signal for d=0.45,drift=0.1
+#-------------------------------------------------------------------------
+dScenarioIndex<-9
+driftScenarioIndex<-41
+
+fileName<-paste0('marketModelResult_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+marketModelResult<-readRDS(file)
+
+fileName<-paste0('strategyOutput_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.rds')
+
+file<-paste0(fileDirectory,'/',fileName)
+tradingModelResult<-readRDS(file)
+
+periodIndex<-(slowLookback+1:400)
+
+priceLevel<-marketModelResult$pricePaths[periodIndex,pathIndex]
+stopLevel<-tradingModelResult$stopLevel[periodIndex,pathIndex]
+zeroIndex<-stopLevel==0
+stopLevel[zeroIndex]<-NA
+emaFast<-tradingModelResult$emaFast[periodIndex,pathIndex]
+emaSlow<-tradingModelResult$emaSlow[periodIndex,pathIndex]
+strategyTwr<-tradingModelResult$twr[periodIndex,pathIndex]
+
+xLabel<-'Time Index (t)'
+yLabel<-'Price Level'
+titleName<-paste0('Trend Following - Signal\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-round(cbind(priceLevel,stopLevel,emaFast,emaSlow),4)
+
+# asset performance with confidence intervals
+g_signals<-plotSecenarioSignals(periodIndex,
+  table_figure,titleName,xLabel,yLabel)
+#print(g_signals)
+
+outputFileName9<-paste0('signal_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+# save to run folder
+ggsave(paste0(fileDirectory,'/',outputFileName9),plot=g_signals)
+# save to project folder
+ggsave(paste0(outputDirectory,'/',outputFileName9),plot=g_signals)
+
+
+xLabel<-'Time Index (t)'
+yLabel<-'TWR'
+titleName<-paste0('Trend Following - Terminal Wealth Relative (TWR)\n (d=',
+  dScenario[dScenarioIndex],',drift=',driftScenario[driftScenarioIndex],')')
+table_figure<-strategyTwr
+marketModelParameterScenarios<-periodIndex
+
+g_strategyTWR<-plotPrice(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+outputFileName10<-paste0('twr_dI_',dScenarioIndex,'_sI_',
+  driftScenarioIndex,'_vI',vScenarioIndex,'_vovI_',vovScenarioIndex,'.png')
+
+ggsave(outputFileName10,plot=g_strategyTWR)
+
+```
+
+
+In Chapter \@ref(market-model), we specified a market model and calibrated it to each instrument in the global futures universe under study. In Chapter 4, we outlined the rules of a simple trading strategy and explored the parameter space. In this Chapter, we use the market and trading models to create sensitivities.
+
+The parameter space of the combined market and trading models is vast. To reduce the dimension of the problem, an initial study was conducted to coarsely explore the impact of different trading model parameters on the strategy backtest results (See parameter selection section). A set of trading model parameters was selected from stable areas of the response curves\footnote{The process required to select robust trading parameters is beyond the scope of this report. An extensive literature associated with a number of disciplines, including machine learning, addressing over-fitting and robust parameter selection exists}.
+
+Following the selection of the trading model parameters, the range of market parameters observed over the entire instrument universe under study was examined and used to determine realistic starting parameter ranges for sensitivity analysis. These ranges were then extended to account for realistic conditions that may be observed in in the future. Once ranges were selected, another coarse study was conducted to determine which market model parameters had the largest impact on performance. Based on these results, the drift ($\mu$) and $d$ parameters were selected for the final sensitivity analysis. 1000 paths, each with a 1250 day length (roughly 5 years), were used for all simulations.  The strategy performance measure (TWR) is defined in Appendix \@ref(appendix-objective-function). A single sensitivity simulation run varying only the drift and $d$ parameters, but holding all other variables constant, generates just under of 28 gigabytes of simulated market model input and trading model output.
+
+Table \@ref(tab:simulationParameters) shows the parameters that are held fixed for the simulations in this Chapter.
+
+The drift ($\mu$) is varied by 0.005 between -0.1 and 0.1.
+
+The long memory parameter ($d$) is varied by 0.05 between 0.05 and 0.45.
+
+### Sensitivity to Trend Conditions
+
+Trend-following strategies operate on the premise that the emergence of a trend in a particular instrument can not be predicted. The system is designed to maintain a position in an instrument as long as it is trending and exit the position when the trend has reversed beyond a multiple of the typical daily range. Any predictability in the characteristics of true range, is thus expected to enable strategy enhancement.
+
+First we use our market model defined above to determine the sensitivity of the strategy to trends of different magnitudes by computing trading model performance under different drift rates ($\mu$).
+
+```{r,globalFutTwrByDriftAndD,echo=FALSE,auto_pdf = FALSE,out.width = '50%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName1<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/strategyAndUnderlyingTwrByDrift_d5"
+knitr::include_graphics(imageFileName1,dpi = NA)
+imageFileName2<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/strategyAndUnderlyingTwrByDrift_d35"
+knitr::include_graphics(imageFileName2,dpi = NA)
+```
+
+The profile that emerges (See Figure directly above) from this sensitivity analysis of the strategy performance with respect to changes in the drift ($\mu$) illustrates the essence of the strategy. From the profile, it is clear that as the price moves up or down strongly, the strategy performance increases. The less variability around the trend, the better the strategy performance. Choppy, sideways movement in prices produces a condition where the strategy repeatedly enters and gets stopped out, generating losses for roughly half of the paths. Increasing the strength of long range dependence in true range by increasing $d$ increases the dispersion of results, particularly for very favorable trend conditions (i.e., high drift,$\mu$).
+
+```{r,globalFutSignalExamplesByDriftAndD,echo=FALSE,auto_pdf = FALSE,out.width = '33%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName1<-outputFileName1
+knitr::include_graphics(imageFileName1,dpi = NA)
+imageFileName2<-outputFileName2
+knitr::include_graphics(imageFileName2,dpi = NA)
+imageFileName3<-outputFileName3
+knitr::include_graphics(imageFileName3,dpi = NA)
+imageFileName4<-outputFileName4
+knitr::include_graphics(imageFileName4,dpi = NA)
+imageFileName5<-outputFileName5
+knitr::include_graphics(imageFileName5,dpi = NA)
+imageFileName6<-outputFileName6
+knitr::include_graphics(imageFileName6,dpi = NA)
+imageFileName7<-outputFileName7
+knitr::include_graphics(imageFileName7,dpi = NA)
+imageFileName8<-outputFileName8
+knitr::include_graphics(imageFileName8,dpi = NA)
+imageFileName9<-outputFileName9
+knitr::include_graphics(imageFileName9,dpi = NA)
+```
+
+Examining sample price paths with the trailing stop and signal superimposed, it is possible to get some intuition about the result. As we increase the strength of long memory in the true range, the price paths get visibly more volatile (See Figure directly above). The stop is the blue line that ratchets behind the price depicted in black. The red line shows the fast EMA, while the purple line depicts the slow EMA. As we reduce the drift (in absolute value terms), the strategy gets stopped out more often. Performance is better on the long side than the short side because price is unbounded on the positive side, but bounded by zero on the negative side.
+
+```{r,globalFutTwrExamplesByDriftAndD,echo=FALSE,auto_pdf = FALSE,out.width = '33%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName18<-outputFileName18
+knitr::include_graphics(imageFileName18,dpi = NA)
+imageFileName17<-outputFileName17
+knitr::include_graphics(imageFileName17,dpi = NA)
+imageFileName16<-outputFileName16
+knitr::include_graphics(imageFileName16,dpi = NA)
+imageFileName15<-outputFileName15
+knitr::include_graphics(imageFileName15,dpi = NA)
+imageFileName14<-outputFileName14
+knitr::include_graphics(imageFileName14,dpi = NA)
+imageFileName13<-outputFileName13
+knitr::include_graphics(imageFileName13,dpi = NA)
+imageFileName12<-outputFileName12
+knitr::include_graphics(imageFileName12,dpi = NA)
+imageFileName11<-outputFileName11
+knitr::include_graphics(imageFileName11,dpi = NA)
+imageFileName10<-outputFileName10
+knitr::include_graphics(imageFileName10,dpi = NA)
+```
+
+Focusing on the terminal wealth relative curves (See Appendix \@ref(appendix-objective-function) for details), one can see that increasing variation around the trend reduces performance.The impact of increasing $d$ is largest during strong trend conditions.
+
+### Sensitivity to Serial Dependence in True Range
+
+Given the observed long range serial dependence in the true range, a natural question arises as to the sensitivity of the performance of our simple trading model to the strength of autocorrelation. To determine the link between strategy performance and autocorrelation we perturb the $d$ parameter, generate price and true range scenarios, then evaluate strategy performance under each scenario.
+
+```{r,globalFutTwrByD,echo=FALSE,auto_pdf = FALSE,out.width = '50%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName1<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/underlyingByD_driftNeg10.png"
+imageFileName2<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/underlyingByD_drift0.png"
+imageFileName3<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/underlyingByD_drift10.png"
+imageFileName4<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/strategyByD_driftNeg10.png"
+imageFileName5<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/strategyByD_drift0.png"
+imageFileName6<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/strategyByD_drift10.png"
+knitr::include_graphics(imageFileName1,dpi = NA)
+knitr::include_graphics(imageFileName4,dpi = NA)
+knitr::include_graphics(imageFileName2,dpi = NA)
+knitr::include_graphics(imageFileName5,dpi = NA)
+knitr::include_graphics(imageFileName3,dpi = NA)
+knitr::include_graphics(imageFileName6,dpi = NA)
+```
+
+Counter-intuitively, increasing the long range dependence in true range increases the dispersion of outcomes and - for the most part - *worsens* performance. There is a slight improvement in both median and mean performance as we *decrease* $d$. Although it is difficult to determine the source of this effect without a significant amount of additional research, it seems likely that it is possible to redesign components of the trading system to exploit the regularity in true range driven by long range dependence. The model that has been developed in this report should provide a reasonable starting point for such an endeavor.
+
+```{r simulationParameters,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+# define parameters
+randomSeed<-1234567
+
+# trading model parameters
+atrLookback <- 20
+atrMultiplier <- 4
+fastLookback <- 120
+slowLookback <- 180
+longOnly <- FALSE
+commissionPerShare <- 0
+accountSize <- 100000
+fPercent <- 0.01
+minRisk <-0.001
+stopTWR <-0.7
+
+# market model parameters
+nRowsScenario<-1250
+nPathsScenario<-1000
+S0<-1
+T<-5
+
+#
+dScenario<-seq(0.05,0.45,by=0.05)
+driftScenario<-seq(-0.1,0.1,by=0.005)
+volLevelScenario<-log(seq(0.0005,0.0035,by=0.0005))
+volOfVolScenario<-seq(0.1,0.9,by=0.05)
+
+vovScenarioIndex<-2
+vScenarioIndex<-4
+xMean<-volLevelScenario[vScenarioIndex]
+xSigma2<-volOfVolScenario[vovScenarioIndex]
+
+simulationParameters<-t(data.frame(atrLookback,atrMultiplier,fastLookback,
+  slowLookback,longOnly,commissionPerShare,accountSize,fPercent,minRisk,stopTWR,
+  nRowsScenario,nPathsScenario,S0,T,xMean,xSigma2,randomSeed))
+
+colnames(simulationParameters)<-'Parameter'
+
+knitr::kable(simulationParameters, booktabs = TRUE,
+  caption = 'Simulation Parameters',digits=4)
+
+```

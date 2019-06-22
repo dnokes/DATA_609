@@ -1,0 +1,72 @@
+# Trading Model {#trading-todel}
+
+## Model Specification
+
+We implement a very simple version of a common systematic trend-following strategy [@Faith2007-cf]\footnote{See the reference for the definition of the EMA}. The instrument-level logic of the trading system has a several core components: 1) The *entry signal*, determines timing for initiating a position (either long or short) in a particular instrument; 2) The *position sizing* algorithm determines the size of a position; and, 3) The *trailing stop loss* determines the timing of a exit from a position\footnote{Although trend-following models used in practice have a layer of controls at the portfolio level, in this report we focus only on the instrument-level components of the strategy.}. 
+
+Both the position size and the distance of the trailing stop from the current price level are functions of the true range, $R_{t}$ (defined in Chapter \@ref(intro), Equation \@ref(eq:introTrueRange)).
+
+Filters are commonly used to smooth price series. We use exponentially weighted moving averages (EMAs) to smooth both price and the true range time series.
+
+The core rules of our simple trading model are detailed briefly in the next two sub-sections.
+
+### Long Position
+
+At $t$, if the fast $\text{EMA}_{t-1,F}$ is *above* the slow $\text{EMA}_{t-1,S}$ and we have no position, we enter a *long* position of $p_{t}$ units:
+
+\begin{equation}
+  p_{t}=\text{floor}\bigg[\frac{ f \times A_{t-1}}{\text{max}[\text{ATR}_{t-1} \times M,L]}\bigg]
+  (\#eq:tradingModelLongPositionSizing)
+\end{equation} 
+
+where $f$ is the fraction of account size plus accrued realized P&L risked per bet ($A$), $\text{ATR}_{t-1}$ is the EMA of the true range for the previous time step, $M$ is the risk multiplier, and $L$ is the $\text{ATR}$ floor.
+
+We set our initial stop loss level $M$ units of ATR *below* the entry price level, $p_{t}$. For each subsequent time, $t$, we update our stop level as follows:
+
+\begin{equation}
+  s_{t}=\text{max}[P_{t}-\text{ATR}_{t-1} \times M,s_{t-1}]
+  (\#eq:tradingModelLongStop)
+\end{equation} 
+
+We exit our long position if the price, $p_{t}$ moves below the stop loss level, $s_{t-1}$. 
+
+### Short Position
+
+At $t$, if the fast $\text{EMA}_{t-1,F}$ is *below* the slow $\text{EMA}_{t-1,S}$ and we have no position, we enter a *short* position of $p_{t}$ units:
+
+\begin{equation}
+  p_{t}=-\text{floor}\bigg[\frac{ f \times A_{t-1}}{\text{max}[\text{ATR}_{t-1} \times M,L]}\bigg]
+  (\#eq:tradingModelShortPositionSizing)
+\end{equation}
+
+We set our initial stop loss level $M$ units of ATR *above* the entry price level, $p_{t}$. For each subsequent time, $t$, we update our stop level as follows:
+
+\begin{equation}
+  S_{t}=\text{min}[P_{t}-\text{ATR}_{t-1} \times M,S_{t-1}]
+  (\#eq:tradingModelShortStop)
+\end{equation} 
+
+Regardless of whether we are long or short, for each trade we budget for a loss of $f$ percent of our account size plus accrued realized P&L. The effectiveness of this crude risk budgeting system is a function of the characteristics of the true range. Serial dependence in the true range can transform this simple mechanism from a feedback control to a feed-forward control. 
+
+## Parameter Selection
+
+The selection of robust trading model parameters is a complex process. Typically, bootstrapping inputs, determining the trading model performance for each bootstrapped path for each coordinate in the parameter space, then averaging the results for each coordinate in the parameter space, vastly improves the continuity of the space for visualization. Given the computationally intensive nature of such a task, this type of process can really only be achieved through the use of parallel processing.  
+
+In this section we use a brute force grid search to get a course understanding of the parameter space.
+
+We first examine the impact of the ATR multiplier on the geometric mean return (See Figure 4.1). Our interest is not in finding the absolute highest performance, but in selecting a parameter that both performs well and is located in a reasonably stable part of the parameter space. We select a multiplier of 4, then search the EMA lookback space.
+
+```{r geometricMeanByAtrMultiplier,echo=FALSE,auto_pdf = FALSE,out.width = '75%',fig.cap='Performance Impact of ATR Multiplier'}
+imageFileName1<-'C:/Users/Derek/Documents/GitHub/IS609/final_project/geometricMeanByATRMultiplier.png'
+knitr::include_graphics(imageFileName1,dpi = NA)
+
+```
+
+```{r twrByLookback,echo=FALSE,auto_pdf = FALSE,out.width = '75%',fig.cap='Performance Impact of EMA Lookbacks'}
+imageFileName2<-'C:/Users/Derek/Documents/GitHub/IS609/final_project/parameterSpaceFastBySlowNoBagging.png'
+knitr::include_graphics(imageFileName2,dpi = NA)
+imageFileName3<-'C:/Users/Derek/Documents/GitHub/IS609/final_project/twrByTrendFilterLookbacks.png'
+knitr::include_graphics(imageFileName3,dpi = NA)
+```
+
+Figures 4.2 and 4.3 show the performance variation (geometric mean return) associated with changing the fast and slow EMA lookbacks. We select a fast lookback of 120 and a slow lookback of 180 days.

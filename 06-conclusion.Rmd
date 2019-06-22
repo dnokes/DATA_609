@@ -1,0 +1,9 @@
+# Conclusion {#conclusion}
+
+In this report, we formulated both a simple systematic trend-following strategy (i.e., trading model) to simulate investment decisions, and a market model to simulate the evolution of instrument prices. We explored the sensitivity of our strategy to different market conditions (for a particular set of trading model parameters) and provided a map between the market model parameters for each scenario representing a particular market condition and strategy performance. In particular, we focused on identifying the performance impact of changes in 1) serial dependence in price variability, and; 2) changes in the trend.
+
+The sensitivities derived provide an effective visual depiction of the fundamental profile of the simple trading strategy and suggest an explanation for the functions of trading model components commonly found in trend-following strategies. The long range serial dependence in the true range appears to *worsen* performance of the simple classic trend-following strategy. During periods of strong performance, the dispersion of trading outcomes increases significantly as long range serial dependence increases. 
+
+More research is required to determine whether a slightly more complex feed-forward controller could be created to improve the performance of the strategy by exploiting long memory in the true range.
+
+An extension of our simple single instrument market market model to a multiple instrument model could provide useful sensitivity analysis relating to the cross-dependence between instruments.

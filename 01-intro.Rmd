@@ -1,0 +1,71 @@
+# Introduction {#intro}
+
+```{r,echo=FALSE,message=FALSE,error=FALSE}
+#chapterLabel<-'CH'
+chapterLabel<-'Chapter'
+```
+
+For the class of market participants employing fully systematic approaches to manage their investments, it is possible to determine the exact responses of their strategies to any conceivable set of market conditions. As a result, they can conduct sensitivity analysis to systematically uncover undesirable strategy behavior and enhance strategy robustness. 
+
+Systematic traders generally use sensitivity analysis to identify the set conditions under which the *trading system* will operate within acceptable bounds. In this report, we refer to this set of conditions as the *operational domain* of the strategy (for a specific set of trading model parameters). The broader the spectrum of market conditions over which a trading system can perform within acceptable performance bounds (i.e. the broader the operational domain of the strategy), the more *robust* the system.
+
+In general, the operational domain of a trading strategy can be broadened through the introduction of feedback and feed-forward risk controls. Feedback risk controls operate to reduce the impact of unpredictable phenomena or events on strategy performance, while feed-forward controls exploit regularities in market structure to make local predictions that aid in the enhancement of strategy performance. We use feedback controls when poor trading performance is not driven by something we can predict. We use feed-forward controls when we understand the drivers of poor performance and there is enough persistence in the market conditions for us to effectively anticipate future poor performance.
+
+In the following sections, a simple systematic investment approach - a so called trend-following strategy - is explored through the use of Monte Carlo simulation. In particular, a market model is specified and used to generate realistic realizations of financial instrument prices across of broad spectrum of market conditions. Sensitivity analysis is then conducted, mapping the relationship between market model parameters and the strategy performance under a particular set of trading model parameters.
+
+The market model (i.e., the model used to simulate instrument prices) has been designed to capture a set of essential stylized facts believed to be critical to the effective functioning of the strategy. As a model is a simplification of reality by definition, we do not attempt to reproduce all empirical stylized facts. We also limit the complexity and scope of the work by focusing on the instrument-level strategy. Portfolio-level meta-strategies that determine how to allocate across instrument-level strategy instances are not explored.
+
+## Methodology
+
+Typically, systematic traders *backtest* the strategies that they employ (i.e., they use historical data to evaluate potential performance). Such backtesting allows systematic traders to determine the response of a strategy to the exact mix of market conditions that actually occurred, but not the response of a strategy to conditions that have not yet occurred or that may occur in different proportions in the future. Typically, the longer the historical period used, the more varied the market conditions, and the more likely that historical data can be used to build a relatively complete picture of the operational domain.
+
+There are two main ways to supplement the historical data available for testing, namely market model-based Monte Carlo simulation, and Monte Carlo resampling. In this report, we focus on the former approach to explore the characteristics of a simple trend-following strategy.
+
+In order to simulate financial prices, a market model is designed, implemented, and calibrated to financial market data. The market model reproduces key well-established stylized facts, particularly focusing on time-varying, serially dependent price variability. Trading strategy sensitivities are created by simulating price and true range scenarios - consisting of many realizations - for a range of key market model parameters, then computing the performance of the trading strategy for all realizations under each scenario.
+
+In the following sub-section of `r chapterLabel` \@ref(intro), we provide a description of the data acquisition and transformation process (Section \@ref(data-acquisition-transformation)). Instrument-specific details for each of the global futures markets in the instrument universe under study can be found in Appendix \@ref(appendix-instrument-details). In subsequent Chapters, we provide an overview of the stylized facts (`r chapterLabel` \@ref(stylized-facts)), then detail the market model (`r chapterLabel` \@ref(market-model)) and the trading model (`r chapterLabel` 4) used to generate sensitivities (`r chapterLabel` \@ref(sensitivity-analysis)).
+
+## Data Acquisition and Transformation {#data-acquisition-transformation}
+
+Futures contracts for 115 distinct markets over the period between 1999-01-01 and 2017-05-05 were acquired from CSI. For each instrument, a *back-adjustment* process was used to build a continuous series, then a *volatility-normalized* total return index accounting for changes in prices and the impact of rolls  was constructed\footnote{It is important to note that the total return of a long-term position taken using futures instruments must account for so-called 'rolls'. As futures contracts have finite maturities, to take a long-term position, a trader must trade a series of individual futures contracts. Traders must repeatedly extend the maturity of their positions by executing spread trades that close positions nearing expiry and and open equivalent positions in contracts with greater maturity. The process of converting a position about to expire into a position with an expiry further into the future (thereby extending the maturity) is commonly referred to as a 'roll'. The maturity profile associated with particular roll parameters is an important determinant of total return in futures-based strategies.} (see Figure \@ref(fig:globalFutTwrAndTr)). 
+
+True range - a commonly used measure of the daily price range of a financial instrument that accounts for gaps from the close of the previous period to open of the current period - is defined as follows:
+
+\begin{equation}
+  R_{t} = \text{max}[P_{t,H}-P_{t,L},\text{abs}(P_{t,H}-P_{t-1}),\text{abs}(P_{t,L}-P_{t-1})]
+  (\#eq:introTrueRange)
+\end{equation} 
+
+where $P_{t,H}$ and $P_{t,L}$ are the current daily high and low prices respectively, and $P_{t-1}$ is the previous close price.
+
+The index for each instrument represents the total return on a re-balanced position sized to equate a move of 4 units of price variability (i.e., average true range) to a 1% loss\footnote{The huge 2015 spike that appears in the true range plot above was caused by the actions of the Swiss central bank and is not a data error. Although such moves are rare, they do happen.}. Positions are rebalanced at each roll. Use of the volatility-normalized total return index facilitates comparison of model parameters across the instrument universe\footnote{The volatility-normalization process was also used to meet the conditions of the data agreement with the vendor.}.
+
+The total return index for each of the global futures markets is shown in the upper half of Figure \@ref(fig:globalFutTwrAndTr), while the corresponding true range for the volatility-normalized total return indices is depicted in the lower half of the figure.
+
+```{r,globalFutTwrAndTr,echo=FALSE,auto_pdf = FALSE,,out.width = '75%',fig.align = 'center',fig.cap="Global Futures - Volatility-Normalized Total Return Indices"}
+# ![Volatility-Normalized Futures Daily Prices](C:/Users/Derek/Documents/GitHub/IS609/final_project/normalizedGlobalFuturesPriceAndRange.png)
+imageFileName<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/normalizedGlobalFuturesPriceAndRange.png"
+knitr::include_graphics(imageFileName,dpi = NA)
+```
+
+## Software
+
+This report has been written using the **bookdown** package [@R-bookdown], which was built on top of R Markdown and **knitr** [@xie2015].
+
+All of the code used to generate the report is available on the project github page:
+
+https://github.com/dgn2/IS609
+
+buildGlobalFuturesDataset.R: Extracts data from a MySQL database and builds the R data set.
+
+establishStylizedFacts.R: Used to explore the stylized facts
+
+calibrateMarketModelLRD_log.R: Calibrates the market model
+
+selectTradingModelParameters.R: Used to explore the trading model parameters via brute force search.
+
+simulateMarketModelLRD_rerun_2.R: Simulates the market model and computes the sensitivities
+
+As a single run of the simulation produces nearly 28 gigabytes of data, it is not possible to make the full result set available on github. Key results and data have been uploaded to github.
+
+The project .Rmd files assemble the visualization and text comprising the report. Each section of the report has a corresponding .Rmd file.

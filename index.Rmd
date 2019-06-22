@@ -1,0 +1,51 @@
+--- 
+title: "IS609 - Anatomy of a Simple Global Futures Trend-Following Strategy"
+author: "Derek G Nokes"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::pdf_book
+documentclass: book
+header-includes:
+   - \usepackage{colortbl, xcolor, tkz-euclide}
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: dgn2/bookdown-final_project
+description: "Systematic traders employ fully systematic strategies to manage their investments. As a result of the fully defined algorithmic nature of such strategies, it is possible to determine their exact responses to any conceivable set of market conditions. Consequently, sensitivity analysis can be conducted to systematically uncover undesirable strategy behavior and enhance strategy robustness by adding controls to reduce exposure during periods of poor performance / unfavorable market conditions, or increase exposure during periods of strong performance / favorable market conditions.In this paper, we formulate both a simple systematic trend-following strategy (i.e., trading model) to simulate investment decisions, and a market model to simulate the evolution of instrument prices. We then map the relationship between market model parameters and strategy performance under a particular set of trading model parameters to explore the sensitivity of the strategy to different market conditions. We focus, in particular, on identifying the performance impact of changes in both serial dependence in price variability and changes in the trend.The sensitivities derived provide an effective set of metrics for for determining the fundamental profile of the simple trading strategy and suggest an explanation for the functions of trading model components commonly found in trend-following strategies."
+---
+
+```{r,echo=FALSE,message=FALSE,error=FALSE}
+# load packages
+
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(ggExtra)
+library(hash)
+library(xts)
+library(Rcpp)
+library(MASS)
+library(hexbin)
+library(reshape2)
+library(ztable)
+library(arfima)
+
+```
+
+
+# Abstract {-}
+
+Systematic traders employ fully systematic strategies to manage their investments. As a result of the fully defined algorithmic nature of such strategies, it is possible to determine their exact responses to any conceivable set of market conditions. Consequently, sensitivity analysis can be conducted to systematically uncover undesirable strategy behavior and enhance strategy robustness by adding controls to reduce exposure during periods of poor performance / unfavorable market conditions, or increase exposure during periods of strong performance / favorable market conditions.
+
+In this report, we formulate both a simple systematic trend-following strategy (i.e., trading model) to simulate investment decisions, and a market model to simulate the evolution of instrument prices. We then map the relationship between market model parameters and strategy performance under a particular set of trading model parameters to explore the sensitivity of the strategy to different market conditions. We focus, in particular, on identifying the performance impact of changes in both serial dependence in price variability and changes in the trend.
+
+The sensitivities derived provide an effective set of metrics for for determining the fundamental profile of the simple trading strategy and suggest an explanation for the functions of trading model components commonly found in trend-following strategies.
+
+keywords: trend-following, Monte Carlo, sensitivity analysis
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```

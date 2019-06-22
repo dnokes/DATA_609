@@ -1,0 +1,427 @@
+# Stylized Facts {#stylized-facts}
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+
+#-------------------------------------------------------------------------
+# Multiple plot function (Source: Cookbook for R)
+#-------------------------------------------------------------------------
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot
+# objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+  if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout),
+                                               ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this
+      # subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+#-------------------------------------------------------------------------
+# compute ACF for each path, return ACF by path, percentile bounds, and
+# mean
+#-------------------------------------------------------------------------
+acfPaths <- function(e,maxLag,alpha){
+
+  dimension <- dim(e)
+  nRows<-dimension[1]
+  nPaths <- dimension[2]
+
+  eAcfC<-matrix(0,nrow=maxLag,ncol=nPaths)
+  eAcfLag<-matrix(0,nrow=maxLag,ncol=nPaths)
+
+  for (pathIndex in 1:nPaths){
+    # filter out NAs
+    nonNaIndex<-!is.na(e[,pathIndex]) & e[,pathIndex]!=0
+    eNoNA<-e[nonNaIndex,pathIndex]
+    # autocorrelation
+    eAcfData<-acf(eNoNA,lag.max=maxLag,plot=FALSE)
+    eAcfC[,pathIndex]<-eAcfData$acf[2:(maxLag+1)]
+    eAcfLag[,pathIndex]<-eAcfData$lag[2:(maxLag+1)]
+  }
+
+  lowerPercentile<-alpha/2
+  upperPercentile<-1-alpha/2
+  ePercentileAcf<-apply(eAcfC,1, quantile, probs=c(lowerPercentile,
+    0.5,upperPercentile), na.rm=TRUE)
+  eMeanAcf<-apply(eAcfC,1, mean, na.rm=TRUE)
+
+  output<-list(percentileAcf=ePercentileAcf,meanAcf=eMeanAcf,
+               acfPaths=eAcfC)
+
+  return (output)
+}
+
+#-------------------------------------------------------------------------
+# plot median with confidence bounds
+#-------------------------------------------------------------------------
+plotSecenarioPerformanceWithCI<- function (marketModelParameterScenarios,
+  table_figure,titleName,xLabel,yLabel){
+
+  figure_df <- data.frame(marketModelParameterScenarios=marketModelParameterScenarios,
+    Lower=table_figure[,1],Median=table_figure[,2],Upper=table_figure[,3])
+
+  limits <- aes(ymax = Upper, ymin=Lower)
+
+  p1 <- ggplot(figure_df, aes(marketModelParameterScenarios)) +
+    geom_line(aes(y=Median), colour="blue") +
+    scale_color_grey() +
+    geom_ribbon(limits, alpha=0.2) +
+    ggtitle(titleName) + xlab(xLabel) + ylab(yLabel)
+
+  return (p1)
+
+}
+
+#-------------------------------------------------------------------------
+# plot histogram with normal density
+#-------------------------------------------------------------------------
+normalHistFit<-function (e,xLabel,titleName,breaks){
+  notNaIndex<-!is.na(e)
+  #
+  e<-e[notNaIndex]
+  # estimate distribution parameters
+  result<-fitdistr(e,'normal')
+  mu<-result$estimate[1]
+  sigma<-result$estimate[2]
+  hist(e,freq=FALSE,breaks=breaks,
+       xlab=xLabel,main=titleName)
+  curve(dnorm(x, mean=mu, sd=sigma),
+        add=TRUE, col='darkblue', lwd=2)
+
+  return (result)
+}
+
+#-------------------------------------------------------------------------
+# plot series
+#-------------------------------------------------------------------------
+plotPrice<- function (marketModelParameterScenarios,table_figure,
+  titleName,xLabel,yLabel){
+
+  figure_df <- data.frame(Price=table_figure)
+
+  p1 <- ggplot(figure_df, aes(marketModelParameterScenarios)) +
+    geom_line(aes(y=Price), colour="blue") +
+    scale_color_grey() +
+    ggtitle(titleName) + xlab(xLabel) + ylab(yLabel)
+
+  return (p1)
+
+}
+
+#-------------------------------------------------------------------------
+# plot series
+#-------------------------------------------------------------------------
+plotTrueRange<- function (marketModelParameterScenarios,table_figure,
+  titleName,xLabel,yLabel){
+
+  figure_df <- data.frame(Price=table_figure)
+
+  p1 <- ggplot(figure_df, aes(marketModelParameterScenarios)) +
+    geom_line(aes(y=Price), colour="blue") +
+    scale_color_grey() +
+    ggtitle(titleName) + xlab(xLabel) + ylab(yLabel)
+
+  return (p1)
+
+}
+
+#-------------------------------------------------------------------------
+# compute cumulative return (from log changes)
+#-------------------------------------------------------------------------
+cumulative2LogReturn <- function (x){
+  return(diff(log(x),lag=1))
+}
+
+# change this to a list that returns the matrix of inital prices
+# and the returns so that it can be converted back to prices
+
+#-------------------------------------------------------------------------
+# compute cumulative return (from log changes)
+#-------------------------------------------------------------------------
+cumulativeLogReturn <- function (x){
+  return(exp(cumsum(x)))
+}
+
+#=========================================================================
+# read data from disk
+#=========================================================================
+startYYYY<-1999
+fileDirectory<-'C:/Users/Derek/Documents/GitHub/IS609/final_project/'
+
+fileNamePrice<-paste0("dailyPrices_",startYYYY,".rds")
+fileNameTr<-paste0("dailyTr_",startYYYY,".rds")
+fileNameTrLog<-paste0("dailyTrLog_",startYYYY,".rds")
+fileNameContractDetails<-paste0("contractDetails_",startYYYY,".rds")
+fileNameInstrumentDetailsList<-paste0("instrumentDetailsList_",
+  startYYYY,".rds")
+
+fileNameTwr<-paste0("dailyTwr_",startYYYY,".rds")
+fileNameTwrTr<-paste0("dailyTwrTr_",startYYYY,".rds")
+fileNameTwrTrLog<-paste0("dailyTwrTrLog_",startYYYY,".rds")
+
+filePrice<-paste0(fileDirectory,'/',fileNamePrice)
+fileTr<-paste0(fileDirectory,'/',fileNameTr)
+fileTrLog<-paste0(fileDirectory,'/',fileNameTrLog)
+fileContractDetails<-paste0(fileDirectory,'/',
+  fileNameContractDetails)
+fileInstrumentDetailList<-paste0(fileDirectory,'/',
+  fileNameInstrumentDetailsList)
+
+fileTwr<-paste0(fileDirectory,'/',fileNameTwr)
+fileTwrTr<-paste0(fileDirectory,'/',fileNameTwrTr)
+fileTwrTrLog<-paste0(fileDirectory,'/',fileNameTwrTrLog)
+
+#=========================================================================
+# read the data from disk
+#=========================================================================
+
+# read daily global futures prices
+dailyPrices <- readRDS(filePrice)
+# read daily global futures true range
+dailyTr <- readRDS(fileTr)
+# read daily global futures log true range
+dailyTrLog <- readRDS(fileTrLog)
+
+# read daily global futures prices
+dailyTwr <- readRDS(fileTwr)
+# read daily global futures true range
+dailyTwrTr <- readRDS(fileTwrTr)
+# read daily global futures log true range
+dailyTwrTrLog <- readRDS(fileTwrTrLog)
+
+# read contract details
+contractDetails<-readRDS(fileContractDetails)
+# read instrument details
+instrumentDetailsList<-readRDS(fileInstrumentDetailList)
+# extract instrument details
+instrumentTickers<-instrumentDetailsList$instrumentTickers
+instrumentNames<-instrumentDetailsList$instrumentNames
+instrumentGroups<-instrumentDetailsList$instrumentGroups
+currencyCodes<-instrumentDetailsList$currencyCodes
+csiMultipliers<-instrumentDetailsList$csiMultipliers
+
+#
+trPaths<-coredata(dailyTrLog)
+#
+dateTime<-index(dailyTrLog)
+#
+pricePaths<-coredata(dailyPrices)
+#
+twrPaths<-coredata(dailyTwr)
+#
+twrTrPaths<-coredata(dailyTwrTrLog)
+
+# convert the price paths to returns
+logReturn<-apply(pricePaths,2,cumulative2LogReturn)
+
+logTwrReturn<-apply(twrPaths,2,cumulative2LogReturn)
+
+# compute log return ACF
+maxLag<-250
+alphaCI<-0.05
+logReturnACF<-acfPaths(logTwrReturn,maxLag,alphaCI)
+# replace with ggplot2
+#matplot(logReturnACF$acfPaths,type='l')
+
+# compute log true range ACF
+maxLag<-250
+alphaCI<-0.05
+twrTrACF<-acfPaths(twrTrPaths,maxLag,alphaCI)
+# replace with ggplot2
+#matplot(twrTrACF$acfPaths,type='l',main='')
+
+xLabel<-'Lag (k)'
+yLabel<-'ACF'
+titleName<-'ACF (Actual) \n Log Return'
+marketModelParameterScenarios <- (2:(maxLag+1))
+table_figure<-round(t(logReturnACF$percentileAcf),4)
+
+logReturn_ACF<-plotSecenarioPerformanceWithCI(marketModelParameterScenarios,
+  table_figure,titleName,xLabel,yLabel)
+#print(logReturn_ACF)
+
+imageFileName1<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnACF.png"
+ggsave(imageFileName1,plot=logReturn_ACF)
+
+xLabel<-'Lag (k)'
+yLabel<-'ACF'
+titleName<-'ACF (Actual) \n True Range'
+marketModelParameterScenarios <- (2:(maxLag+1))
+table_figure<-round(t(twrTrACF$percentileAcf),4)
+
+tr_ACF<-plotSecenarioPerformanceWithCI(marketModelParameterScenarios,
+  table_figure,titleName,xLabel,yLabel)
+#print(tr_ACF)
+
+imageFileName2<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/actualTrACF.png"
+ggsave(imageFileName2,plot=tr_ACF)
+
+# # plot the log return distribution
+# instrumentIndex<-45
+# xLabel<-'log(return)'
+# titleName<-instrumentNames[instrumentIndex]
+# breaks<-50
+# logReturnSP500<-normalHistFit(logTwrReturn[,instrumentIndex],
+#   xLabel,titleName,breaks)
+# #print(g1)
+# imageFileName3<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnSP500.png"
+# ggsave(imageFileName3,plot=logReturnSP500)
+# 
+# # plot the log return distribution
+# instrumentIndex<-14
+# xLabel<-'log(return)'
+# titleName<-instrumentNames[instrumentIndex]
+# breaks<-50
+# logReturnEURUSD<-normalHistFit(logTwrReturn[,instrumentIndex],
+#   xLabel,titleName,breaks)
+# #print(g1)
+# imageFileName4<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnEURUSD.png"
+# ggsave(imageFileName4,plot=logReturnEURUSD)
+# 
+# # plot the log return distribution
+# instrumentIndex<-10
+# xLabel<-'log(return)'
+# titleName<-instrumentNames[instrumentIndex]
+# breaks<-50
+# logReturnNatGas<-normalHistFit(logTwrReturn[,instrumentIndex],
+#   xLabel,titleName,breaks)
+# #print(g1)
+# imageFileName5<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnNatGas.png"
+# ggsave(imageFileName5,plot=logReturnNatGas)
+
+instrumentIndex<-45
+xLabel<-'Time Index (t)'
+yLabel<-'log(True Range)'
+titleName<-paste0('log(True Range)\n',instrumentNames[instrumentIndex])
+table_figure<-twrTrPaths[,instrumentIndex]
+marketModelParameterScenarios<-seq(1,length(table_figure))
+
+logTrSP500<-plotTrueRange(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+imageFileName6<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrueRangeSP500.png"
+ggsave(imageFileName6,plot=logTrSP500)
+
+instrumentIndex<-14
+xLabel<-'Time Index (t)'
+yLabel<-'log(True Range)'
+titleName<-paste0('log(True Range)\n',instrumentNames[instrumentIndex])
+table_figure<-twrTrPaths[,instrumentIndex]
+marketModelParameterScenarios<-seq(1,length(table_figure))
+
+logTrEURUSD<-plotTrueRange(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+imageFileName7<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrEURUSD.png"
+ggsave(imageFileName7,plot=logTrEURUSD)
+
+instrumentIndex<-10
+xLabel<-'Time Index (t)'
+yLabel<-'log(True Range)'
+titleName<-paste0('log(True Range)\n',instrumentNames[instrumentIndex])
+table_figure<-twrTrPaths[,instrumentIndex]
+marketModelParameterScenarios<-seq(1,length(table_figure))
+
+logTrNatGas<-plotTrueRange(marketModelParameterScenarios,table_figure,titleName,xLabel,yLabel)
+
+imageFileName8<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrueRangeNatGas.png"
+ggsave(imageFileName8,plot=logTrNatGas)
+
+```
+
+## Literature Review - Stylized Facts
+
+There exists a vast literature on the empirical characteristics of financial markets, documenting extensively the basic stylized facts. A similarly broad literature also exists on the derivation of financial derivative sensitivities. To price and risk manage products with path-dependent payoffs similar to a trend-following strategy, Monte Carlo simulation is often required. Despite a seemly obvious link between the analysis of systematic trading strategies and the analysis of replication strategies used to manufacture financial derivative products, little published work exists leveraging the findings in these two areas of research to the analysis of systematic trading strategies.
+
+Although the scope of this report does not allow for a detailed exploration of the stylized facts, a number of comprehensive surveys exist ([@Bollerslev1992-wg], [@Brock1996-zi], [@Pagan1996-gw], [@Cont2001-yx], [@Farmer2009-ye], [@Gourieroux2001-vl], [@Rao1996-ve], [@Pagan1996-gw], and [@Shephard1996-gp])
+
+The most basic and commonly agreed upon facts upon which we rely in this report are as follows: 1) Price returns of financial instruments show insignificant serial correlation; 2) The unconditional distributions of returns are heavy-tailed, and; 3) Price variability for all financial instruments is both time-varying and serially dependent.
+
+### Serial Dependence
+
+The figure below was derived by computing the autocorrelation functions (ACFs) for the log returns and the true ranges for each instrument in the universe under study, then computing the median and 95% confidence interval. 
+
+```{r,globalFutSerialDependence,echo=FALSE,auto_pdf = FALSE,out.width = '50%'}
+#fig.cap="Autocorrelation Function"
+#![Autocorrelation Function of Log Return](C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnACF.png)
+#![Autocorrelation Function of Log True Range](C:/Users/Derek/Documents/GitHub/IS609/final_project/actualTrACF.png)
+
+imageFileName1<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnACF.png"
+imageFileName2<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/actualTrACF.png"
+knitr::include_graphics(imageFileName1,dpi = NA)
+knitr::include_graphics(imageFileName2,dpi = NA)
+```
+
+Notice that the autocorrelation of the true range decays very slowly. A similar pattern is found for all common measures of price variability. In the model calibration section of Chapter \@ref(market-model) we outline the scaling law that describes the pattern in the autocorrelation and specify a model to simulate this behavior.
+
+### Heavy-Tailed Returns Distributions 
+
+The figure below illustrates the heavy-tailed distributions of log returns for three instruments from the instrument universe under study. A normal distribution is superimposed over the histogram for each instrument.
+
+```{r,globalFutFatTails,echo=FALSE,auto_pdf = FALSE,out.width = '33%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName3<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnSP500.png"
+imageFileName4<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnEURUSD.png"
+imageFileName5<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logReturnNatGas.png"
+
+knitr::include_graphics(imageFileName3,dpi = NA)
+knitr::include_graphics(imageFileName4,dpi = NA)
+knitr::include_graphics(imageFileName5,dpi = NA)
+```
+
+A similar pattern is found for the log returns of all global futures instruments.
+
+### Time-varying Price Variability
+
+The illustration below shows the true range for the same three instruments as those depicted in the figure directly above.
+
+```{r,globalFutTimeVaryingVol,echo=FALSE,auto_pdf = FALSE,out.width = '33%'}
+#fig.cap="Autocorrelation Function"
+
+imageFileName6<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrueRangeSP500.png"
+imageFileName7<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrEURUSD.png"
+imageFileName8<-"C:/Users/Derek/Documents/GitHub/IS609/final_project/logTrueRangeNatGas.png"
+
+knitr::include_graphics(imageFileName6,dpi = NA)
+knitr::include_graphics(imageFileName7,dpi = NA)
+knitr::include_graphics(imageFileName8,dpi = NA)
+```
+
+It is clear that the true range varies over time.
+
+Again, the pattern persists across all global futures instruments.
